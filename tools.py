@@ -1,8 +1,9 @@
 from langchain_core.tools import tool
 from langchain_community.tools import HumanInputRun
 from langchain_community.tools.tavily_search import TavilySearchResults
+import sys
+from agent.tools_weather import get_temperature, get_apparent_temperature, get_day_or_night, get_full_weather_report, get_precipitation, get_rain, get_relative_humidity, get_showers, get_snowfall
 import os
-import sys 
 
 sys.path.append("..\\utils")
 
@@ -20,8 +21,8 @@ def set_posture_to(posture: str) -> str:
 
 @tool 
 def say_joke(joke: str) -> str:
-    """Usefull function when ask you for tell a joke you must pass the joke as argument"""
-    print(joke)
+    """Usefull function when ask you for tell a joke you must pass the joke as argument but you must ASK before using this function to human concern"""
+    print("JAJAJAJ JOKE",joke,"====================")
     return "joke sucessfully said"
 
 os.environ["TAVILY_API_KEY"] = "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"
@@ -44,4 +45,9 @@ def get_input() -> str:
 
 human = HumanInputRun(input_func=get_input)
 
-tools = [set_posture_to,say_joke]
+tools = [
+  set_posture_to, 
+  say_joke, 
+  get_temperature, get_apparent_temperature, get_day_or_night, get_full_weather_report, get_precipitation, get_rain, get_relative_humidity, get_showers, get_snowfall,
+  human  
+]
