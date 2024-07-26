@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 
-from agent.agentHandler import AgentHandler
+from agent.agentHandler import NaoAgent, AgentHandler
 from tools import tools
 
 # Cargar las variables del archivo .env
@@ -12,16 +12,18 @@ api_key = os.getenv('API_KEY')
 model_name = os.getenv('MODEL')
 lang = os.getenv('AILANG')
 thread_id = os.getenv('THREAD_ID')
+nao_ip = os.getenv('NAO_IP')
 
 print(api_key,model_name)
 
-chatbot = AgentHandler(
+chatbot = NaoAgent(
   api_key=api_key,
   tools=tools,
   model_name=model_name,
   thread_id=thread_id,
   memory=True,
-  lang=lang
+  lang=lang,
+  nao_ip=nao_ip
 )
 
 chatbot.display_graph(chatbot.graph)

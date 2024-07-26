@@ -11,9 +11,9 @@ from naoqi import ALProxy
 dotenv.load_dotenv("..\\.env")
 
 # Acceder a las variables de entorno
-naoip = os.getenv('NAO_IP')
+naoip = os.getenv('NAO_IPS')
 
-tts = ALProxy("ALTextToSpeech", naoip, 9559)
+tts = ALProxy("ALTextToSpeech", "169.254.219.188", 9559)
 
 phrase = ""
 
@@ -25,5 +25,4 @@ for text in sys.argv:
 
 phrase = phrase.decode('utf-8', 'ignore')
 phrase = phrase.encode('utf-8', 'ignore')
-print(phrase)
 tts.say(phrase)

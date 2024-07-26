@@ -143,20 +143,25 @@ class AgentHandler:
                 for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
                     if isinstance(event["messages"][-1], AIMessage):
                         self.speak(event["messages"][-1].content)
+                        pass
                     event["messages"][-1].pretty_print()
             except Exception as e:
                 print(f"Error occurred: {e}")
 
 # Clase NaoAgent que hereda de AgentHandler, específica para el robot NAO
 class NaoAgent(AgentHandler):
-    def __init__(self, api_key, tools, model_name, thread_id, only_llm=False, memory=True, nao_ip="127.0.0.1"):
+    def __init__(self, api_key, tools, model_name, thread_id, memory=True, lang="es", nao_ip="127.0.0.1",nao_desc=""):
         """
         Inicializa un agente específico para el robot NAO.
         
         :param nao_ip: Dirección IP del robot NAO
         """
-        super().__init__()
+        super().__init__(api_key=api_key,tools=tools,model_name=model_name,thread_id=thread_id,memory=memory,lang=lang)
         self.nao_ip = nao_ip
+        self.nao_desc = nao_desc
+
+    def personality(self):
+        print(self.nao_desc)
 
     def speak(self, text):
         """
@@ -164,7 +169,8 @@ class NaoAgent(AgentHandler):
         
         :param text: Texto a sintetizar
         """
-        speak_command = "python .\\Nao\\NaoSpeak.py  " + text
+        speak_command = "python2 .\\Nao\\NaoSpeak.py  " + text
+        print(speak_command)
         process = subprocess.Popen(speak_command.split(), stdout=subprocess.PIPE)
 
 if __name__ == "__main__":
