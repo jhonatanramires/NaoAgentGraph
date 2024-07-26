@@ -169,9 +169,9 @@ class NaoAgent(AgentHandler):
         
         :param text: Texto a sintetizar
         """
-        speak_command = "python2 .\\Nao\\NaoSpeak.py  " + text
-        print(speak_command)
-        process = subprocess.Popen(speak_command.split(), stdout=subprocess.PIPE)
+        if not isinstance(text, list):
+            speak_command = "python2 .\\Nao\\NaoSpeak.py  " + text
+            process = subprocess.Popen(speak_command.split(), stdout=subprocess.PIPE)
 
 if __name__ == "__main__":
     # Dependencies for Custom Tools
