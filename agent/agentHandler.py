@@ -91,9 +91,9 @@ class AgentHandler:
         
         :param text: Texto a sintetizar
         """
-        print(f'afdskjlfñalkkfklakfsdksfjkl,speak_{self.lang}_arg.exe')
-        speak_command = f'speak_{self.lang}_arg.exe "{text}"'
-        process = subprocess.Popen(speak_command, stdout=subprocess.PIPE)
+        speak_command = f'.\\textToSpeech\\bin\\speak_{self.lang}_arg.exe "{text}"'
+        if not isinstance(text,list):
+          process = subprocess.Popen(speak_command, stdout=subprocess.PIPE)
     
     def _setup_graph(self):
         """
@@ -129,6 +129,16 @@ class AgentHandler:
         except Exception as e:
             print(f"Error generating the image: {e}")
 
+    def prompt(self,user_input):
+      try:
+        for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
+          if isinstance(event["messages"][-1], AIMessage) and not isinstance(event["messages"][-1], ToolMessage):
+            self.speak(event["messages"][-1].content)
+            pass
+          event["messages"][-1].pretty_print()
+      except Exception as e:
+        print(f"Error occurred: {e}")
+
     def chat(self):
         """
         Inicia un bucle de chat interactivo con el usuario.
@@ -142,8 +152,12 @@ class AgentHandler:
             try:
                 for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
                     if isinstance(event["messages"][-1], AIMessage):
+                      print(event["messages"][-1])
+                      print(event["messages"][-1].type)
+                      try:
+                        idk = event["messages"][-1].tool_call_id
+                      except:
                         self.speak(event["messages"][-1].content)
-                        pass
                     event["messages"][-1].pretty_print()
             except Exception as e:
                 print(f"Error occurred: {e}")

@@ -16,16 +16,16 @@ nao_ip = os.getenv('NAO_IP')
 
 print(api_key,model_name)
 
-chatbot = NaoAgent(
+chatbot = AgentHandler(
   api_key=api_key,
   tools=tools,
   model_name=model_name,
   thread_id=thread_id,
   memory=True,
   lang=lang,
-  nao_ip=nao_ip
 )
+nao_ip=nao_ip
 
-chatbot.display_graph(chatbot.graph)
-chatbot.display_graph(chatbot.llm_with_tools.get_graph())
+#chatbot.display_graph(chatbot.graph)
+#chatbot.display_graph(chatbot.llm_with_tools.get_graph())
 chatbot.chat()

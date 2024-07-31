@@ -2,3 +2,10 @@
 .venv
 ./memory
 memory
+memory-shm
+memory-wal
+.cache.sqlite
+utils\__pycache__
+speechToText\__pycache__
+agent\__pycache__
+__pycache__
