@@ -9,3 +9,12 @@ utils\__pycache__
 speechToText\__pycache__
 agent\__pycache__
 __pycache__
+gmailToken.json
+utils\credentials.json
+utils\token.json
+utils/credentials.json
+utils/token.json
+agent/__pycache__/agentHandler.cpython-312.pyc
+__pycache__/tools.cpython-312.pyc
+__pycache__/tools.cpython-312.pyc
+agent/__pycache__/agentHandler.cpython-312.pyc

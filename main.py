@@ -7,6 +7,8 @@ from tools import tools
 # Cargar las variables del archivo .env
 load_dotenv()
 
+LANGS = ["es","en"]
+
 # Acceder a las variables de entorno
 api_key = os.getenv('API_KEY')
 model_name = os.getenv('MODEL')
@@ -22,7 +24,7 @@ chatbot = AgentHandler(
   model_name=model_name,
   thread_id=thread_id,
   memory=True,
-  lang=lang,
+  lang="es",
 )
 nao_ip=nao_ip
 

@@ -23,7 +23,7 @@ chatbot = AgentHandler(
   model_name=model_name,
   thread_id=thread_id,
   memory=True,
-  lang='en',
+  lang='es',
 )
 nao_ip=nao_ip
 

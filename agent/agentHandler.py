@@ -91,7 +91,7 @@ class AgentHandler:
         
         :param text: Texto a sintetizar
         """
-        speak_command = f'.\\textToSpeech\\bin\\speak_{self.lang}_arg.exe "{text}"'
+        speak_command = f'.\\textToSpeech\\bin\\speak_{self.lang}_arg.exe "{str(text).replace('"',"")}"'
         if not isinstance(text,list):
           process = subprocess.Popen(speak_command, stdout=subprocess.PIPE)
     
@@ -161,6 +161,29 @@ class AgentHandler:
                     event["messages"][-1].pretty_print()
             except Exception as e:
                 print(f"Error occurred: {e}")
+    
+    def response(self,input):
+        """
+        crea una respuesta para el usuario en base al input.
+        """
+        print("===============================================================================")
+        user_input = input
+        msg = ""
+        try:
+          for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
+            if isinstance(event["messages"][-1], AIMessage):
+              print(event["messages"][-1])
+              print(event["messages"][-1].type)
+              try:
+                idk = event["messages"][-1].tool_call_id
+              except:
+                self.speak(event["messages"][-1].content)
+                msg = event["messages"][-1].content
+              event["messages"][-1].pretty_print()
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return "Ups an error has happend"
+        return msg
 
 # Clase NaoAgent que hereda de AgentHandler, específica para el robot NAO
 class NaoAgent(AgentHandler):
