@@ -31,6 +31,96 @@ import subprocess
 from dotenv import load_dotenv
 import os
 
+class BasicAgentHandler:
+  class State(TypedDict):
+    messages: Annotated[list, add_messages]
+
+  def _chatbot(self, state: State):
+    """
+    Función interna que maneja la lógica del chatbot.
+    
+    :param state: Estado actual del agente
+    :return: Nuevo estado con la respuesta del modelo
+    """
+    messages = state["messages"]
+    print("================================ Debug Messages ================================")
+    print("Debug: Messages before LLM invocation:", messages[-1], end="\n\n")
+    for message in messages:
+        if isinstance(message, ToolMessage):
+            print(message)
+    result = self.llm.invoke(messages)
+    print("Debug: LLM response:", result, end="\n")
+    return {"messages": [result]}
+
+  def _setup_graph(self):
+    """
+      funcion interna que configura el grafo de estados para el flujo de conversación.
+      
+      :return: Grafo compilado
+    """
+    graph_builder = StateGraph(self.State)
+    graph_builder.add_node("chatbot", self._chatbot)
+    tool_node = ToolNode(self.tools)
+    graph_builder.add_node("tools", tool_node)
+    graph_builder.add_conditional_edges("chatbot", tools_condition)
+    graph_builder.add_edge(START, "chatbot")
+    graph_builder.add_edge("tools", "chatbot")
+    return graph_builder.compile(checkpointer=self.checkpointer)
+
+  def __init__(self, api_key, tools, model_name, thread_id):
+        """
+        Inicializa el AgentHandler con los parámetros necesarios.
+        
+        :param api_key: Clave API para el modelo de lenguaje
+        :param tools: Herramientas disponibles para el agente
+        :param model_name: Nombre del modelo de lenguaje a utilizar
+        :param thread_id: ID único para el hilo de conversación
+        """
+        self.tools = tools
+        self.llm = ChatAnthropic(model_name=model_name, api_key=api_key)
+        self.llm = self.llm.bind_tools(self.tools)
+        self.checkpointer = SqliteSaver.from_conn_string("memory")
+        self.graph = self._setup_graph()
+        self.config = {"configurable": {"thread_id": f"{thread_id}"}}
+  
+  def display_graph(self, graph):
+    """
+    Muestra una representación visual del grafo que se pase como argumento
+    
+    :param graph: Grafo a visualizar
+    """
+    try:
+      img_data = graph.get_graph().draw_mermaid_png()
+      if img_data:
+        img = PILImage.open(io.BytesIO(img_data))
+        img.show()
+      else:
+        print("The image was not generated correctly.")
+    except Exception as e:
+        print(f"Error generating the image: {e}")
+  
+  def response(self,input):
+    """
+    crea una respuesta para el usuario en base al input.
+    """
+    print("===============================================================================")
+    user_input = input
+    msg = ""
+    try:
+      for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
+        if isinstance(event["messages"][-1], AIMessage):
+          print(event["messages"][-1])
+          print(event["messages"][-1].type)
+          try:
+            idk = event["messages"][-1].tool_call_id
+          except:
+            msg = event["messages"][-1].content
+          event["messages"][-1].pretty_print()
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return "Ups an error has happend"
+    return msg
+
 # Define la clase AgentHandler que maneja la lógica principal del agente conversacional
 class AgentHandler:
     # Define una clase anidada State para tipar el estado del agente
@@ -76,13 +166,13 @@ class AgentHandler:
         :return: Nuevo estado con la respuesta del modelo
         """
         messages = state["messages"]
-        print("================================ Debug Messages ================================")
-        print("Debug: Messages before LLM invocation:", messages[-1], end="\n\n")
+        print("================================ Debug Messages (_chatbot) ================================")
+        print("Debug: Messages before LLM invocation (_chatbot):", messages[-1], end="\n\n")
         for message in messages:
             if isinstance(message, ToolMessage):
-                print(message)
+                print(message,"(_chatbot)")
         result = self.llm_with_tools.invoke(messages)
-        print("Debug: LLM response:", result, end="\n")
+        print("Debug: LLM response (_chatbot):", result, end="\n")
         return {"messages": [result]}
     
     def speak(self, text):
@@ -125,55 +215,58 @@ class AgentHandler:
                 img = PILImage.open(io.BytesIO(img_data))
                 img.show()
             else:
-                print("The image was not generated correctly.")
+                print("The image was not generated correctly.(display_graph)")
         except Exception as e:
-            print(f"Error generating the image: {e}")
+            print(f"Error generating the image: {e}(display_graph)")
 
     def prompt(self,user_input):
       try:
         for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
           if isinstance(event["messages"][-1], AIMessage) and not isinstance(event["messages"][-1], ToolMessage):
-            self.speak(event["messages"][-1].content)
+            #self.speak(event["messages"][-1].content)
+            return event["messages"][-1].content
+          else:
             pass
           event["messages"][-1].pretty_print()
       except Exception as e:
-        print(f"Error occurred: {e}")
+        print(f"Error occurred: {e}(prompt)")
+        return "ups :c"
 
     def chat(self):
         """
         Inicia un bucle de chat interactivo con el usuario.
         """
         while True:
-            print("===============================================================================")
+            print("========================================= (chat) =========================================")
             user_input = input("User: ")
             if user_input.lower() in ["quit", "exit", "q"]:
-                print("Goodbye!")
+                print("Goodbye!","(chat)")
                 break
             try:
                 for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
                     if isinstance(event["messages"][-1], AIMessage):
-                      print(event["messages"][-1])
-                      print(event["messages"][-1].type)
+                      print(event["messages"][-1],"(chat)")
+                      print(event["messages"][-1].type,"(chat)")
                       try:
                         idk = event["messages"][-1].tool_call_id
                       except:
                         self.speak(event["messages"][-1].content)
                     event["messages"][-1].pretty_print()
             except Exception as e:
-                print(f"Error occurred: {e}")
+                print(f"Error occurred: {e}(chat)")
     
     def response(self,input):
         """
         crea una respuesta para el usuario en base al input.
         """
-        print("===============================================================================")
+        print("========================================= (response) =========================================")
         user_input = input
         msg = ""
         try:
           for event in self.graph.stream({"messages": [("user", user_input)]}, self.config, stream_mode="values"):
             if isinstance(event["messages"][-1], AIMessage):
-              print(event["messages"][-1])
-              print(event["messages"][-1].type)
+              print(event["messages"][-1],"(response)")
+              print(event["messages"][-1].type,"(response)")
               try:
                 idk = event["messages"][-1].tool_call_id
               except:
@@ -181,7 +274,7 @@ class AgentHandler:
                 msg = event["messages"][-1].content
               event["messages"][-1].pretty_print()
         except Exception as e:
-            print(f"Error occurred: {e}")
+            print(f"Error occurred: {e}","(response)")
             return "Ups an error has happend"
         return msg
 
@@ -198,7 +291,7 @@ class NaoAgent(AgentHandler):
         self.nao_desc = nao_desc
 
     def personality(self):
-        print(self.nao_desc)
+        print(self.nao_desc,"(personality)")
 
     def speak(self, text):
         """
@@ -211,14 +304,15 @@ class NaoAgent(AgentHandler):
             process = subprocess.Popen(speak_command.split(), stdout=subprocess.PIPE)
 
 if __name__ == "__main__":
+    pass
     # Dependencies for Custom Tools
-    from tools import tools
+    #from tools import tools
     # Cargar las variables del archivo .env
-    load_dotenv()
+    #load_dotenv()
 
     # Acceder a las variables de entorno
-    api_key = os.getenv('API_KEY')
-    model_name = os.getenv('MODEL')
-    chatbot = AgentHandler(api_key, tools, "claude-3-haiku-20240307", 1)
+    #api_key = os.getenv('API_KEY')
+    #model_name = os.getenv('MODEL')
+    #chatbot = AgentHandler(api_key, tools, "claude-3-haiku-20240307", 1)
     #chatbot.display_graph()
-    chatbot.chat()
+    #chatbot.chat()
