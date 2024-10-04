@@ -1,7 +1,8 @@
 import streamlit as st
 import os
 from dotenv import load_dotenv, set_key
-from agent.agentHandler import AgentHandler
+from agent.agentHandler import BasicAgentHandler
+from langchain_core.messages import AIMessage, ToolMessage,HumanMessage
 from tools import tools
 # Cargar las variables del archivo .env
 load_dotenv('../.env')
@@ -15,13 +16,11 @@ lang = int(os.getenv('AILANG'))
 thread_id = os.getenv('THREAD_ID')
 nao_ip = os.getenv('NAO_IP')
 
-chatbot = AgentHandler(
+chatbot = BasicAgentHandler(
   api_key=st.session_state['chatbot_api_key'],
   tools=tools,
   model_name=st.session_state['model_name'],
-  thread_id=thread_id,
-  memory=True,
-  lang="es",
+  thread_id=thread_id
 )
 
 def update():
@@ -34,10 +33,18 @@ def updateEnv():
   set_key('../.env', "AILANG", str(LANGS.index(language)))
   lang = LANGS.index(language)
 
+def updateMemory():
+  print(st.session_state['thread_id'])
+  chatbot.config = {"configurable": {"thread_id": f"{st.session_state['thread_id']}"}}
+  st.session_state.messages = chatbot.graph.get_state(config=chatbot.config).values["messages"]
+
+
+st.session_state.messages = chatbot.graph.get_state(config=chatbot.config).values["messages"]
+
 with st.sidebar:
     language = st.selectbox("Language of the Text To Speech",key="language",options=["es: Español","en: English"])
     openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-    thread_id = st.text_input("Which memory you will use",key="thread_id")
+    thread_id = st.text_input("Which memory you will use",key="thread_id",on_change=updateMemory)
     
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
@@ -46,13 +53,15 @@ with st.sidebar:
 st.title("💬 Chatbot")
 st.caption("🚀 A chatbot agent shown by Streamlit")
 
-print(st.session_state)
-
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
 for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+    if isinstance(msg,HumanMessage):
+      st.chat_message("user").write(msg.content)
+    elif isinstance(msg,AIMessage):
+      if not isinstance(msg.content,list):
+        st.chat_message("assistant").write(msg.content)
 
 if prompt := st.chat_input():
     if not openai_api_key:
