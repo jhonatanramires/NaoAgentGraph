@@ -72,7 +72,8 @@ def getTaskInfo(lists=True, tasks=True):
                         "kind": task.get("kind", "N/A"),
                         "id": task.get("id", "N/A"),
                         "title": task.get("title", "N/A"),
-                        "status": task.get("status", "N/A")
+                        "status": task.get("status", "N/A"),
+                        "due": task.get("due", "N/A")
                     }
                     tasklist_info["tasks"].append(task_info)
 
