@@ -3,6 +3,8 @@ from langchain_community.tools import HumanInputRun
 from langchain_community.tools.tavily_search import TavilySearchResults
 #GOOGLE GMAIL
 from agent.tools_gmail import toolkit as gmailToolkit
+from agent.tools_gmail import credentials
+from agent.tools_calendar import calendarToolkit
 
 from nltk import flatten
 
@@ -28,7 +30,7 @@ tavily_api_key = os.getenv('TAVILY_API_KEY')
 
 search = TavilySearchResults(tavily_api_key=tavily_api_key)
 
-CREDS = getCredentials()
+CREDS = credentials
 
 #GOOGLE TASK API
 from googleapiclient.discovery import build
@@ -205,7 +207,8 @@ tools = [
   human,
   getTaskInfo,
   createTask,
-  gmailToolkit
+  gmailToolkit,
+  calendarToolkit
   #search,
 ]
 
